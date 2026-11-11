@@ -1,0 +1,9 @@
+{
+  "name": "lakdi-online",
+  "version": "1.0.0",
+  "description": "Real-time 4-player Lakdi (Indian trump card game) for mobile browsers",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}
