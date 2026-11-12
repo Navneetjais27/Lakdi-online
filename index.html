@@ -194,9 +194,9 @@ details ol{padding-left:18px;margin-top:6px}
       <ol>
         <li>Before each match, 4 cards are opened at a time until a <b>Joker (Jack)</b> appears. Its suit is <b>trump</b> for all 13 rounds.</li>
         <li>Everyone gets <b>13 cards</b>. Then each player <b>says their hand</b>: how many of the 13 rounds they think they will win (1–13).</li>
-        <li>In each round, follow the suit that was led if you can. If you can't, you may cut with a <b>trump</b>.</li>
+        <li>In each round, follow the suit that was led. If you have a <b>bigger card</b> of that suit than the biggest one thrown so far, you <b>must</b> throw a bigger one. If you don't have that suit, you can cut with a <b>trump</b>.</li>
         <li>Highest trump wins the round; otherwise the highest card of the led suit wins. The winner leads next.</li>
-        <li><b>Scoring:</b> if you win at least what you said, you get <b>10 points for every round you won</b> (said 2, won 3 → 30). If you win fewer, you get <b>minus 10 × what you said</b> (said 2, won 1 → −20).</li>
+        <li><b>Scoring:</b> if you win at least what you said, you get <b>10 × what you said, plus 1 for each extra round</b> (said 2, won 4 → 22). If you win fewer, you get <b>minus 10 × what you said</b> (said 2, won 1 → −20).</li>
       </ol>
     </details>
   </div>
@@ -419,7 +419,7 @@ function renderTable(st){
     if(st.trickWinner>=0) hint='';
     else if(st.turn===me){
       if(!st.trick.length) hint='Your lead — throw any card';
-      else { const led=st.trick[0].c.s; hint=st.hand.some(c=>c.s===led)?`Follow ${SYM[led]} ${SNAME[led]}`:(led!==T&&st.hand.some(c=>c.s===T)?`No ${SYM[led]} — cut with trump ${SYM[T]} or throw any card`:`No ${SYM[led]} — throw any card`); }
+      else { const led=st.trick[0].c.s; hint=st.hand.some(c=>c.s===led)?(st.legal.length<st.hand.filter(c=>c.s===led).length?`You must throw a bigger ${SYM[led]}`:`Follow ${SYM[led]} ${SNAME[led]}`):(led!==T&&st.hand.some(c=>c.s===T)?`No ${SYM[led]} — cut with trump ${SYM[T]} or throw any card`:`No ${SYM[led]} — throw any card`); }
     } else hint=`Waiting for ${esc(nameOf(st.turn))}…`;
   }
   $('handinfo').innerHTML=`<span class="nm">${esc(nameOf(me))} (you)</span>${scoreTag(me)}${hint?`<span class="hint">${hint}</span>`:''}`;
@@ -464,7 +464,7 @@ function renderBidding(st){
   const area=$('bidArea');
   if(st.turn===st.you){
     const said=st.bids.reduce((a,b)=>a+(b||0),0);
-    area.innerHTML=`<div class="sub" style="color:var(--gold)">Your turn! Trump is ${SYM[st.trump]} ${SNAME[st.trump]}. Others have said ${said} so far.</div><div class="small">Make it: 10 points per round won · Miss it: −10 × what you said</div><div class="nums">${Array.from({length:13},(_,i)=>`<button data-n="${i+1}">${i+1}</button>`).join('')}</div>`;
+    area.innerHTML=`<div class="sub" style="color:var(--gold)">Your turn! Trump is ${SYM[st.trump]} ${SNAME[st.trump]}. Others have said ${said} so far.</div><div class="small">Make it: 10 × what you said, +1 per extra round · Miss it: −10 × what you said</div><div class="nums">${Array.from({length:13},(_,i)=>`<button data-n="${i+1}">${i+1}</button>`).join('')}</div>`;
     area.querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(S.pending)return; S.pending=true; area.innerHTML='<div class="sub">Sending…</div>'; act('bid',{n:+b.dataset.n}); });
   } else area.innerHTML=`<div class="sub">Look at your cards below while ${esc(nameOf(st.turn))} decides…</div>`;
 }

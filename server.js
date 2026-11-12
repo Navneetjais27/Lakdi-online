@@ -91,11 +91,19 @@ function doBid(r, seat, n) {
   return null;
 }
 
+// Must follow the led suit. If you have a HIGHER card of that suit than the highest
+// one played so far, you must throw a higher one. (Not needed once someone has cut
+// with trump.) No card of the led suit -> throw any card, e.g. a trump to cut.
 const legal = (r, hand) => {
   if (!r.trick.length) return hand;
   const led = r.trick[0].c.s;
   const f = hand.filter(c => c.s === led);
-  return f.length ? f : hand;
+  if (!f.length) return hand;
+  const cut = led !== r.trump && r.trick.some(t => t.c.s === r.trump);
+  if (cut) return f;
+  const top = Math.max(...r.trick.filter(t => t.c.s === led).map(t => t.c.r));
+  const higher = f.filter(c => c.r > top);
+  return higher.length ? higher : f;
 };
 const beats = (r, a, b) => (a.s === b.s ? a.r > b.r : a.s === r.trump);
 function currentWinner(r) { let b = r.trick[0]; for (const t of r.trick) if (beats(r, t.c, b.c)) b = t; return b; }
@@ -128,11 +136,11 @@ function doPlay(r, seat, key) {
 }
 
 function endMatch(r) {
-  // Made your hand: 10 points for every round you won (said 2, won 4 -> 40).
+  // Made your hand: 10 x what you said, plus 1 for each extra round (said 2, won 4 -> 22).
   // Missed it: minus 10 x what you said (said 2, won 1 -> -20).
   const pts = [0, 1, 2, 3].map(i => {
     const b = r.bids[i], t = r.tricks[i];
-    return t >= b ? t * 10 : -b * 10;
+    return t >= b ? b * 10 + (t - b) : -b * 10;
   });
   r.scores = r.scores.map((s, i) => s + pts[i]);
   r.results = { bids: [...r.bids], tricks: [...r.tricks], pts };
@@ -184,7 +192,7 @@ function botCard(r, seat) {
     return high(hand);
   }
   const led = r.trick[0].c.s, best = currentWinner(r).c, last = r.trick.length === 3;
-  const follow = hand.filter(c => c.s === led);
+  const follow = hand.some(c => c.s === led) ? legal(r, hand) : [];
   if (follow.length) {
     const winners = follow.filter(c => beats(r, c, best));
     if (!winners.length) return low(follow);
